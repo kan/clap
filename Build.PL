@@ -11,14 +11,13 @@ my $build = Module::Build->new(
         'Test::Requires' => 0,
     },
     configure_requires   => { 'Module::Build' => '0.38' },
-    requires             => {
+    requires => {
         perl => '5.010001',
-        # 'Exporter'                      => '0',
-        'parent'                        => '0',
-        # 'Plack'                         => '0.9949',
-        'Class::Inspector'                => '0',
-        'UNIVERSAL::can'                => '0',
-    },
+        'Exporter'         => '0',
+        'Class::Inspector' => '0',
+        'UNIVERSAL::can'   => '0',
+        'MIME::Base64'     => '0',
+      },
 
     no_index    => { 'directory' => [ 'inc' ] },
     name        => 'Clap',
