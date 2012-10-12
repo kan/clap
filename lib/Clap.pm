@@ -15,6 +15,26 @@ use UNIVERSAL::can;
 use MIME::Base64;
 use PadWalker qw(var_name);
 use Plack::Request;
+use JSON;
+
+sub _response {
+    my $data = shift;
+
+    if (ref($data) && ref($data) eq 'HASH') {
+        return [
+            200,
+            [ 'Content-Type' => 'application/javascript' ],
+            [ JSON::encode_json($data) ]
+        ];
+    }
+    else {
+        return [
+            200,
+            [ 'Content-Type' => 'text/html' ],
+            [ $data ]
+        ];
+    }
+}
 
 sub app {
     my $pkg = shift;
@@ -25,12 +45,9 @@ sub app {
         my ($method,) = grep { $_ } split(qr{/}, $env->{PATH_INFO}||'');
         $method ||= 'index'; # default
         if ($pkg->can($method)) {
-            return [
-                200,
-                [ 'Content-Type' => 'text/html' ],
-                [ $pkg->$method($env) ]
-            ];
-        } elsif ($method eq 'favicon.ico') {
+            _response($pkg->$method($env));
+        } 
+        elsif ($method eq 'favicon.ico') {
             unless ($FAVICON_IMG) {
                 my @img = qw(
                   iVBORw0KGgoAAAANSUhEUgAAACAAAAAgEAYAAAAj6qa3AAAABmJLR0T///////8JWPfcAAAACXBI
