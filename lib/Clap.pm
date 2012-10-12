@@ -7,12 +7,14 @@ our $VERSION = '0.01';
 use Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw(app);
+our @EXPORT = qw(app req);
 
 our $FAVICON_IMG;
 
 use UNIVERSAL::can;
 use MIME::Base64;
+use PadWalker qw(var_name);
+use Plack::Request;
 
 sub app {
     my $pkg = shift;
@@ -61,6 +63,37 @@ sub app {
         }
     };
 }
+
+sub req {
+    {
+        package DB;
+        () = caller(1);
+    }
+
+    if ((var_name(1, \$_[0]) || '') =~ /^\$(self|class)$/) {
+        $_[0] = shift @DB::args;
+        shift;
+    } 
+    else {
+        shift @DB::args; # drop package
+    }
+
+    my $env = shift @DB::args;
+    my $req = Plack::Request->new($env);
+    if ((var_name(1, \$_[0]) || '') =~ /^\$(req|request)$/) {
+        $_[0] = $req;
+        shift;
+    }
+
+    for (my $i = 0; $i < scalar(@_); $i++) {
+        (my $name = var_name(1, \$_[$i]))
+            or Carp::croak('usage: req my $param');
+
+        $name =~ s/^\$//;
+        $_[$i] = $req->param($name);
+    }
+}
+
 
 
 1;
