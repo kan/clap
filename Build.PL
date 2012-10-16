@@ -19,6 +19,7 @@ my $build = Module::Build->new(
         'UNIVERSAL::can'   => '0',
         'MIME::Base64'     => '0',
         'PadWalker'        => '0',
+        'Data::Section::Simple' => '0',
       },
 
     no_index    => { 'directory' => [ 'inc' ] },

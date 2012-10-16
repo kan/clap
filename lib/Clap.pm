@@ -16,9 +16,10 @@ use MIME::Base64;
 use PadWalker qw(var_name);
 use Plack::Request;
 use JSON;
+use Data::Section::Simple;
 
 sub _response {
-    my $data = shift;
+    my ($pkg, $data) = @_;
 
     if (ref($data) && ref($data) eq 'HASH') {
         return [
@@ -28,10 +29,14 @@ sub _response {
         ];
     }
     else {
+        my $app_data = Data::Section::Simple->new($pkg)->get_data_section;
+        my $clap_data = Data::Section::Simple->new("Clap")->get_data_section;
+        my $html = $app_data ? $app_data->{main} || $clap_data->{main} : $clap_data->{main};
+        $html =~ s/{% body %}/$data/;
         return [
             200,
             [ 'Content-Type' => 'text/html' ],
-            [ $data ]
+            [ $html ]
         ];
     }
 }
@@ -45,7 +50,7 @@ sub app {
         my ($method,) = grep { $_ } split(qr{/}, $env->{PATH_INFO}||'');
         $method ||= 'index'; # default
         if ($pkg->can($method)) {
-            _response($pkg->$method($env));
+            _response($pkg, $pkg->$method($env));
         } 
         elsif ($method eq 'favicon.ico') {
             unless ($FAVICON_IMG) {
@@ -114,6 +119,20 @@ sub req {
 
 
 1;
+
+__DATA__
+@@ main
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <title>clap sample</title>
+</head>
+<body>
+{% body %}
+</body>
+</html>
+
 __END__
 
 =encoding utf8
@@ -144,3 +163,4 @@ This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
+
